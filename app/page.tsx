@@ -83,7 +83,7 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -91,9 +91,8 @@ export default function HomePage() {
   const navLinks = [
     { label: "Acasă", href: "#" },
     { label: "Istorie", href: "#despre" },
-    { label: "Natură", href: "#natura" },
-    { label: "Comunitate", href: "#comunitate" },
-    { label: "Evenimente", href: "#evenimente" },
+    { label: "Meteo", href: "/meteo" },
+    { label: "Harta", href: "#comunitate" },
     { label: "Contact", href: "#contact" },
   ];
 
@@ -144,13 +143,22 @@ export default function HomePage() {
           position: fixed; top: 0; left: 0; right: 0; z-index: 100;
           padding: 1.25rem 2rem;
           display: flex; align-items: center; justify-content: space-between;
-          transition: all 0.4s ease;
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          /* Complet invizibil când suntem sus */
+          background: transparent;
+          backdrop-filter: none;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(-8px);
         }
         .nav.scrolled {
-          background: rgba(245,240,232,0.95);
-          backdrop-filter: blur(12px);
+          background: rgba(245,240,232,0.96);
+          backdrop-filter: blur(14px);
           padding: 0.75rem 2rem;
           box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+          opacity: 1;
+          pointer-events: all;
+          transform: translateY(0);
         }
         .nav-logo {
           font-family: 'Cormorant Garamond', serif;
@@ -315,10 +323,10 @@ export default function HomePage() {
         .scroll-hint {
           position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
           z-index: 2; display: flex; flex-direction: column; align-items: center;
-          gap: 0.5rem; color: rgba(255,255,255,0.5);
+          gap: 0.5rem; color: black;
           animation: bounce 2.5s ease-in-out infinite;
         }
-        .scroll-hint span { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; }
+        .scroll-hint span { font-size: 1rem; letter-spacing: 0.15em; text-transform: uppercase; }
         @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
 
         @media (max-width: 768px) {
@@ -822,7 +830,7 @@ export default function HomePage() {
         <footer>
           <div className="footer-inner">
             <div>
-              <div className="footer-brand">Cristești<span>.</span>md</div>
+              <div className="footer-brand">Cristești</div>
               <div className="footer-tagline">Raionul Nisporeni · Republica Moldova</div>
             </div>
             <div className="footer-links">
@@ -838,7 +846,7 @@ export default function HomePage() {
           </div>
           <div className="footer-bottom">
             <span>© {new Date().getFullYear()} Cristești, Raionul Nisporeni</span>
-            <span>Făcut cu ❤ pentru comunitate</span>
+            <span>Prisăcaru Savelie ❤</span>
           </div>
         </footer>
       </>
