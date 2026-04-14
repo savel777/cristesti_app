@@ -170,6 +170,7 @@ export default function MeteoPage() {
     const [scrolled,    setScrolled]    = useState(false);
     const [menuOpen,    setMenuOpen]    = useState(false);
     const [selectedDay, setSelectedDay] = useState<DayWeather | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getWeatherData = async () =>{
@@ -189,6 +190,14 @@ export default function MeteoPage() {
         return () => window.removeEventListener("scroll", onScroll);
 
     }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-xl font-semibold">Se încarcă datele meteo...</p>
+            </div>
+        );
+    }
     const today = new Date();
     const dayNames = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
 
@@ -256,7 +265,7 @@ export default function MeteoPage() {
         { label: "Natură",     href: "/#natura" },
         { label: "Comunitate", href: "/#comunitate" },
         { label: "Evenimente", href: "/#evenimente" },
-        { label: "Contact",    href: "/#contact" },
+        { label: "Contactt",    href: "/#contact" },
     ];
 
     return (
