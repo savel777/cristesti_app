@@ -1,6 +1,28 @@
 'use client'
 
 import { useState, useEffect } from "react";
+import { notFound } from 'next/navigation';
+
+type WeatherData={
+    location: {
+        lat: number;
+        lon: number;
+        elevation?: number;
+    };
+    current: {
+        time: string;
+        temperature_2m: number;
+        rain: number;
+        is_day: number;
+        relative_humidity_2m: number;
+        apparent_temperature: number;
+    };
+    daily: {
+        sunrise: number;
+        sunset: number;
+    };
+};
+
 
 // ─── SVG Weather Icons (fără Math.cos/sin — coords hardcoded) ─────────────────
 const IconSunny = ({ size = 48 }: { size?: number }) => (
@@ -118,22 +140,7 @@ interface TodayWeather extends DayWeather {
     feelsLike: number; visibility: number; sunrise: string; sunset: string; description: string;
 }
 
-// ─── Hardcoded Data ───────────────────────────────────────────────────────────
-const TODAY: TodayWeather = {
-    day: "Vineri", date: "27 Martie 2026", icon: "partly-cloudy", label: "Parțial noros",
-    high: 14, low: 4, feelsLike: 11, humidity: 62, wind: 18, precipitation: 15,
-    visibility: 12, sunrise: "06:48", sunset: "19:22",
-    description: "O zi de primăvară blândă deasupra Cristeștilor. Norii trec ocazional peste soare, dar temperaturile plăcute fac aerul să miroasă a pământ proaspăt și verdeață tânără.",
-};
 
-const WEEK: DayWeather[] = [
-    { day: "Sâm", date: "28 Mar", icon: "sunny",         label: "Senin",         high: 17, low: 5, humidity: 48, wind: 12, precipitation: 0  },
-    { day: "Dum", date: "29 Mar", icon: "sunny",         label: "Însorit",       high: 19, low: 7, humidity: 44, wind: 9,  precipitation: 0  },
-    { day: "Lun", date: "30 Mar", icon: "partly-cloudy", label: "Parțial noros", high: 15, low: 6, humidity: 58, wind: 15, precipitation: 10 },
-    { day: "Mar", date: "31 Mar", icon: "cloudy",        label: "Noros",         high: 12, low: 5, humidity: 72, wind: 22, precipitation: 30 },
-    { day: "Mie", date: "1 Apr",  icon: "rainy",         label: "Ploaie ușoară", high: 9,  low: 3, humidity: 88, wind: 28, precipitation: 75 },
-    { day: "Joi", date: "2 Apr",  icon: "rainy",         label: "Ploaie",        high: 8,  low: 2, humidity: 90, wind: 24, precipitation: 85 },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function WeatherIconComp({ type, size }: { type: WeatherIcon; size?: number }) {
@@ -152,18 +159,82 @@ function tempColor(temp: number): string {
     if (temp >= 7)  return "#5a8aaa";
     return "#7a9aaa";
 }
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function MeteoPage() {
+
+    const [weatherApi,setWeatherApi]=useState<WeatherData | null>(null);
+
     const [scrolled,    setScrolled]    = useState(false);
     const [menuOpen,    setMenuOpen]    = useState(false);
     const [selectedDay, setSelectedDay] = useState<DayWeather | null>(null);
 
     useEffect(() => {
+        const getWeatherData = async () =>{
+            try{
+                const res = await fetch('/api/meteo');
+                const jsonData= await res.json();
+                setWeatherApi(jsonData);
+            } catch (error){
+                console.error("Fetch error:", err);
+            }
+        }
+
+        getWeatherData();
+
         const onScroll = () => setScrolled(window.scrollY > 80);
         window.addEventListener("scroll", onScroll);
         return () => window.removeEventListener("scroll", onScroll);
+
     }, []);
+    const today = new Date();
+    const dayNames = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
+
+    const TODAY: TodayWeather = {
+        day: dayNames[today.getDay()-1],
+        date: new Intl.DateTimeFormat('ro-RO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(today),
+        icon: "sunny",
+        high: weatherApi ? Math.round(weatherApi.current.temperature_2m) : "",
+        feelsLike: weatherApi ? weatherApi.current.apparent_temperature.toFixed(0) : "",
+        humidity: weatherApi ? weatherApi.current.relative_humidity_2m : "",
+        wind: weatherApi ? Math.round(weatherApi.current.wind_speed_10m) : "",
+        precipitation: weatherApi ? weatherApi.current.precipitation.toFixed(1)+" " : "",
+        visibility: weatherApi ? weatherApi.current.visibility/1000+" " : "",
+
+        sunrise: weatherApi ? new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'UTC'
+        }) : "--:--",
+
+        sunset: weatherApi ? new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'UTC'
+        }) : "--:--",
+    };
+
+    const WEEK: DayWeather[] = [];
+
+    for (let i = 1; i <=6; i++) {
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + i);
+        const dayIndex = futureDate.getDay();
+
+        WEEK.push({
+            day: dayNames[dayIndex],
+            date: futureDate.toLocaleDateString('ro-RO', {
+                day: 'numeric',
+                month: 'short'
+            }),
+            icon: "cloudy",
+            high: weatherApi ? weatherApi.daily.temperature_2m_max[i-1].toFixed(2) : "",
+            precipitation: weatherApi ? weatherApi.daily.precipitation_probability_max[i-1]: "",
+        });
+    }
 
     const navLinks = [
         { label: "Acasă",      href: "/" },
@@ -322,7 +393,7 @@ export default function MeteoPage() {
         }
         .today-temp-unit { font-size: 2.5rem; color: var(--sage); margin-bottom: 1rem; }
         .today-label { font-size: 1rem; color: var(--forest); margin-bottom: 0.25rem; font-weight: 500; }
-        .today-highlow { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.05em; }
+        .today-highlow { font-size: 1.5rem; color: var(--muted); letter-spacing: 0.05em; }
         .today-highlow strong { color: var(--forest); }
 
         .today-desc {
@@ -502,10 +573,9 @@ export default function MeteoPage() {
                                 <div>
                                     <div className="today-label">{TODAY.label}</div>
                                     <div className="today-highlow">
-                                        <strong>↑ {TODAY.high}°</strong>&nbsp; ↓ {TODAY.low}°
                                     </div>
                                     <div className="today-highlow" style={{ marginTop:"0.25rem" }}>
-                                        Simte ca <strong>{TODAY.feelsLike}°C</strong>
+                                        Se simte ca <strong>{TODAY.feelsLike}°C</strong>
                                     </div>
                                 </div>
                             </div>
@@ -540,7 +610,7 @@ export default function MeteoPage() {
                                 </div>
                                 <div className="today-stat">
                                     <span className="today-stat-label"><IconDroplet />Precipitații</span>
-                                    <span className="today-stat-val">{TODAY.precipitation}%</span>
+                                    <span className="today-stat-val">{TODAY.precipitation}mm</span>
                                 </div>
                                 <div className="today-stat">
                                     <span className="today-stat-label"><IconEye />Vizibilitate</span>
@@ -566,7 +636,6 @@ export default function MeteoPage() {
                                 <span className="day-label-small">{day.label}</span>
                                 <div className="day-temps">
                                     <span className="day-high" style={{ color: tempColor(day.high) }}>{day.high}°</span>
-                                    <span className="day-low">{day.low}°</span>
                                 </div>
                                 {day.precipitation > 0 && (
                                     <span className="day-precip">
@@ -610,7 +679,7 @@ export default function MeteoPage() {
             <footer>
                 <div className="footer-inner">
                     <div>
-                        <div className="footer-brand">Cristești<span>.</span>md</div>
+                        <div className="footer-brand">Cristești</div>
                         <div className="footer-tagline">Raionul Nisporeni · Republica Moldova</div>
                     </div>
                     <div className="footer-links">
@@ -620,12 +689,12 @@ export default function MeteoPage() {
                     <div className="footer-links">
                         <strong style={{ color:"rgba(255,255,255,0.6)", fontSize:"0.7rem", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:"0.5rem", display:"block" }}>Contact</strong>
                         <a href="mailto:contact@cristesti.md">contact@cristesti.md</a>
-                        <a href="#">Primăria Nisporeni</a>
+                        <a href="#">Primăria Cristești</a>
                     </div>
                 </div>
                 <div className="footer-bottom">
                     <span>© {new Date().getFullYear()} Cristești, Raionul Nisporeni</span>
-                    <span>Făcut cu ❤ pentru comunitate</span>
+                    <span>Prisacaru Savelie</span>
                 </div>
             </footer>
         </>
