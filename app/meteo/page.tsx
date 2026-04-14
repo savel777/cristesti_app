@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { notFound } from 'next/navigation';
 
-type WeatherData={
+type WeatherData = {
     location: {
         lat: number;
         lon: number;
@@ -16,13 +16,16 @@ type WeatherData={
         is_day: number;
         relative_humidity_2m: number;
         apparent_temperature: number;
+        wind_speed_10m: number;
     };
     daily: {
-        sunrise: number;
-        sunset: number;
+        sunrise: string[];
+        sunset: string[];
+        temperature_2m_max: number[];
+        temperature_2m_min: number[];
+        precipitation_probability_max: number[];
     };
 };
-
 
 // ─── SVG Weather Icons (fără Math.cos/sin — coords hardcoded) ─────────────────
 const IconSunny = ({ size = 48 }: { size?: number }) => (
@@ -175,7 +178,7 @@ export default function MeteoPage() {
                 const jsonData= await res.json();
                 setWeatherApi(jsonData);
             } catch (error){
-                console.error("Fetch error:", err);
+                console.error("Fetch error:", error);
             }
         }
 
@@ -190,36 +193,43 @@ export default function MeteoPage() {
     const dayNames = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
 
     const TODAY: TodayWeather = {
-        day: dayNames[today.getDay()-1],
+        day: dayNames[today.getDay()],
         date: new Intl.DateTimeFormat('ro-RO', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
         }).format(today),
+
         icon: "sunny",
-        high: weatherApi ? Math.round(weatherApi.current.temperature_2m) : "",
-        feelsLike: weatherApi ? weatherApi.current.apparent_temperature.toFixed(0) : "",
-        humidity: weatherApi ? weatherApi.current.relative_humidity_2m : "",
-        wind: weatherApi ? Math.round(weatherApi.current.wind_speed_10m) : "",
-        precipitation: weatherApi ? weatherApi.current.precipitation.toFixed(1)+" " : "",
-        visibility: weatherApi ? weatherApi.current.visibility/1000+" " : "",
+        label: "Vreme frumoasă",
+        description: "Cer mai mult senin.",
 
-        sunrise: weatherApi ? new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'UTC'
-        }) : "--:--",
+        high: weatherApi ? Math.round(weatherApi.current.temperature_2m) : 0,
+        low: 0,
 
-        sunset: weatherApi ? new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'UTC'
-        }) : "--:--",
+        feelsLike: weatherApi ? Math.round(weatherApi.current.apparent_temperature) : 0,
+        humidity: weatherApi ? weatherApi.current.relative_humidity_2m : 0,
+        wind: weatherApi ? Math.round(weatherApi.current.wind_speed_10m) : 0,
+        precipitation: weatherApi ? weatherApi.current.rain : 0,
+        visibility: 10,
+
+        sunrise: weatherApi
+            ? new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : "--:--",
+
+        sunset: weatherApi
+            ? new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : "--:--",
     };
-
     const WEEK: DayWeather[] = [];
 
-    for (let i = 1; i <=6; i++) {
+    for (let i = 1; i <= 6; i++) {
         const futureDate = new Date(today);
         futureDate.setDate(today.getDate() + i);
         const dayIndex = futureDate.getDay();
@@ -231,11 +241,15 @@ export default function MeteoPage() {
                 month: 'short'
             }),
             icon: "cloudy",
-            high: weatherApi ? weatherApi.daily.temperature_2m_max[i-1].toFixed(2) : "",
-            precipitation: weatherApi ? weatherApi.daily.precipitation_probability_max[i-1]: "",
+            label: "—",
+
+            high: weatherApi ? weatherApi.daily.temperature_2m_max[i] : 0,
+            low: weatherApi ? weatherApi.daily.temperature_2m_min[i] : 0,
+            humidity: 0,
+            wind: 0,
+            precipitation: weatherApi ? weatherApi.daily.precipitation_probability_max[i] : 0,
         });
     }
-
     const navLinks = [
         { label: "Acasă",      href: "/" },
         { label: "Istorie",    href: "/#despre" },
