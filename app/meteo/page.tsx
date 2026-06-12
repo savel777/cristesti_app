@@ -167,11 +167,7 @@ export default function MeteoPage() {
             try {
                 const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
                 const res = await fetch(`${baseUrl}/api/meteo`);
-
-                if (!res.ok) {
-                    throw new Error(`Eroare HTTP! Status: ${res.status}`);
-                }
-
+                if (!res.ok) throw new Error(`Eroare HTTP! Status: ${res.status}`);
                 const jsonData = await res.json();
                 setWeatherApi(jsonData);
             } catch (error) {
@@ -179,7 +175,7 @@ export default function MeteoPage() {
             } finally {
                 setLoading(false);
             }
-        }
+        };
         getWeatherData();
 
         const onScroll = () => setScrolled(window.scrollY > 80);
@@ -187,10 +183,40 @@ export default function MeteoPage() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (menuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [menuOpen]);
+
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-xl font-semibold">Se încarcă datele meteo...</p>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                background: '#f5f0e8',
+                fontFamily: "'Jost', sans-serif",
+                flexDirection: 'column',
+                gap: '1rem',
+            }}>
+                <div style={{
+                    width: 48,
+                    height: 48,
+                    border: '2px solid rgba(196,154,60,0.2)',
+                    borderTop: '2px solid #c49a3c',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                }} />
+                <p style={{ color: '#5a7a5a', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    Se încarcă datele meteo…
+                </p>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
@@ -200,11 +226,7 @@ export default function MeteoPage() {
 
     const TODAY: TodayWeather = {
         day: dayNames[today.getDay()],
-        date: new Intl.DateTimeFormat('ro-RO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        }).format(today),
+        date: new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(today),
         icon: "sunny",
         label: "Vreme frumoasă",
         description: "Cer mai mult senin.",
@@ -217,37 +239,30 @@ export default function MeteoPage() {
         visibility: 10,
         sunrise: weatherApi && weatherApi.daily.sunrise[0]
             ? weatherApi.daily.sunrise[0].includes('T')
-                ? weatherApi.daily.sunrise[0].split('T')[1].slice(0, 5) // Extrage direct "HH:MM" din string
+                ? weatherApi.daily.sunrise[0].split('T')[1].slice(0, 5)
                 : new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
             : "--:--",
-
         sunset: weatherApi && weatherApi.daily.sunset[0]
             ? weatherApi.daily.sunset[0].includes('T')
-                ? weatherApi.daily.sunset[0].split('T')[1].slice(0, 5) // Extrage direct "HH:MM" din string
+                ? weatherApi.daily.sunset[0].split('T')[1].slice(0, 5)
                 : new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
-            : "--:--",};
-    const WEEK: DayWeather[] = [];
+            : "--:--",
+    };
 
+    const WEEK: DayWeather[] = [];
     for (let i = 1; i <= 5; i++) {
         const futureDate = new Date(today);
         futureDate.setDate(today.getDate() + i);
         const dayIndex = futureDate.getDay();
-
         const rawHigh = weatherApi?.daily?.temperature_2m_max?.[i] ?? 0;
         const rawLow  = weatherApi?.daily?.temperature_2m_min?.[i] ?? 0;
-
         WEEK.push({
             day: dayNames[dayIndex],
-            date: futureDate.toLocaleDateString('ro-RO', {
-                day: 'numeric',
-                month: 'short'
-            }),
+            date: futureDate.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' }),
             icon: "cloudy",
             label: "",
-
             high: Math.round(rawHigh),
             low: Math.round(rawLow),
-
             humidity: 100,
             wind: 0,
             precipitation: weatherApi ? weatherApi.daily.precipitation_probability_max[i] : 0,
@@ -281,6 +296,7 @@ export default function MeteoPage() {
         }
 
         html { scroll-behavior: smooth; }
+
         body {
           font-family: 'Jost', sans-serif;
           background: var(--cream);
@@ -316,17 +332,65 @@ export default function MeteoPage() {
           text-decoration: none; opacity: 0.8; transition: opacity 0.2s;
         }
         .nav-links a:hover { opacity: 1; }
-        .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
-        .hamburger span { width: 24px; height: 1.5px; background: var(--forest); display: block; }
-        .mobile-menu {
-          display: none; position: fixed; inset: 0; z-index: 99;
-          background: var(--cream); flex-direction: column;
-          align-items: center; justify-content: center; gap: 2rem;
-        }
-        .mobile-menu.open { display: flex; }
-        .mobile-menu a { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--forest); text-decoration: none; }
-        @media (max-width: 768px) { .nav-links { display: none; } .hamburger { display: flex; } }
 
+        /* Hamburger */
+        .hamburger {
+          display: none; flex-direction: column; gap: 5px;
+          cursor: pointer; background: none; border: none; padding: 4px;
+          z-index: 101;
+        }
+        .hamburger span {
+          width: 24px; height: 1.5px;
+          background: var(--forest); display: block;
+          transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .hamburger.is-open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+        .hamburger.is-open span:nth-child(2) { opacity: 0; }
+        .hamburger.is-open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+        /* Mobile overlay menu */
+        .mobile-menu {
+          display: none;
+          position: fixed; inset: 0; z-index: 99;
+          background: var(--cream);
+          flex-direction: column;
+          align-items: center; justify-content: center; gap: 2.5rem;
+          opacity: 0; transform: translateY(-12px);
+          transition: opacity 0.3s ease, transform 0.3s ease;
+          pointer-events: none;
+        }
+        .mobile-menu.open {
+          display: flex;
+          opacity: 1; transform: translateY(0);
+          pointer-events: all;
+        }
+        .mobile-menu a {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 2.2rem; color: var(--forest);
+          text-decoration: none; font-weight: 300;
+          letter-spacing: 0.02em;
+          transition: color 0.2s;
+        }
+        .mobile-menu a:hover { color: var(--gold); }
+
+        @media (max-width: 768px) {
+          .nav-links { display: none; }
+          .hamburger { display: flex; }
+          /* Always show nav on mobile so hamburger is accessible */
+          .nav {
+            opacity: 1 !important;
+            pointer-events: all !important;
+            transform: none !important;
+            background: transparent;
+          }
+          .nav.scrolled {
+            background: rgba(245,240,232,0.96);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+          }
+        }
+
+        /* ── HERO ── */
         .weather-hero {
           min-height: 100vh;
           background: linear-gradient(
@@ -340,7 +404,14 @@ export default function MeteoPage() {
             #f5f0e8 100%
           );
           display: flex; flex-direction: column; justify-content: center;
-          position: relative; overflow: hidden; padding: 7rem 2rem 5rem;
+          position: relative; overflow: hidden;
+          padding: 7rem 2rem 5rem;
+        }
+        @media (max-width: 768px) {
+          .weather-hero { padding: 5rem 1rem 4rem; }
+        }
+        @media (max-width: 480px) {
+          .weather-hero { padding: 4.5rem 0.75rem 3rem; }
         }
 
         .weather-hero::after {
@@ -352,12 +423,30 @@ export default function MeteoPage() {
             radial-gradient(ellipse 45% 22% at 55% 30%, rgba(255,255,255,0.3) 0%, transparent 70%);
         }
 
-        .weather-hills { position: absolute; bottom: 0; left: 0; right: 0; pointer-events: none; z-index: 1; }
-        .weather-inner { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .weather-hills {
+          position: absolute; bottom: 0; left: 0; right: 0;
+          pointer-events: none; z-index: 1;
+        }
 
-        .w-eyebrow { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 3rem; }
-        .w-eyebrow-line { width: 2rem; height: 1px; background: rgba(45,74,45,0.3); }
-        .w-eyebrow span { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(45,74,45,0.6); font-weight: 500; }
+        .weather-inner {
+          position: relative; z-index: 2;
+          max-width: 1200px; margin: 0 auto; width: 100%;
+        }
+
+        /* ── EYEBROW ── */
+        .w-eyebrow {
+          display: flex; align-items: center; gap: 0.75rem;
+          margin-bottom: 2rem;
+        }
+        .w-eyebrow-line { width: 2rem; height: 1px; background: rgba(45,74,45,0.3); flex-shrink: 0; }
+        .w-eyebrow span {
+          font-size: 0.7rem; letter-spacing: 0.2em;
+          text-transform: uppercase; color: rgba(45,74,45,0.6); font-weight: 500;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        @media (max-width: 480px) {
+          .w-eyebrow span { font-size: 0.6rem; letter-spacing: 0.12em; }
+        }
 
         /* ── TODAY CARD ── */
         .today-card {
@@ -366,60 +455,151 @@ export default function MeteoPage() {
           backdrop-filter: blur(24px);
           border-radius: 6px;
           padding: 3rem;
-          display: grid; grid-template-columns: 1fr auto;
-          gap: 3rem; margin-bottom: 2rem;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 3rem;
+          margin-bottom: 2px;
           animation: fadeUp 0.8s ease both;
           box-shadow: 0 8px 40px rgba(45,74,45,0.08), 0 2px 8px rgba(0,0,0,0.04);
         }
-        @media (max-width: 700px) { .today-card { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; } }
 
-        .today-date-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sage); margin-bottom: 0.5rem; }
-        .today-day-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300; color: var(--forest); line-height: 1; margin-bottom: 0.25rem; }
-        .today-full-date { font-size: 0.85rem; color: var(--muted); margin-bottom: 2rem; }
+        @media (max-width: 860px) {
+          .today-card {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            padding: 2rem;
+          }
+          /* On tablet/mobile, right column goes first (icon + stats) */
+          .today-right { order: -1; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1.5rem; }
+          .today-icon-wrap { width: 80px; height: 80px; }
+          .today-stats { flex: 1; min-width: 200px; }
+        }
 
-        .today-temp-row { display: flex; align-items: flex-end; gap: 1.5rem; margin-bottom: 1.25rem; }
-        .today-temp { font-family: 'Cormorant Garamond', serif; font-size: clamp(5rem, 10vw, 8rem); font-weight: 300; color: var(--forest); line-height: 1; letter-spacing: -0.02em; }
-        .today-temp-unit { font-size: 2.5rem; color: var(--sage); margin-bottom: 1rem; }
+        @media (max-width: 480px) {
+          .today-card { padding: 1.5rem; gap: 1.5rem; }
+          .today-right { flex-direction: column; align-items: center; }
+          .today-stats { width: 100%; }
+        }
+
+        .today-date-label {
+          font-size: 0.7rem; letter-spacing: 0.2em;
+          text-transform: uppercase; color: var(--sage); margin-bottom: 0.5rem;
+        }
+        .today-day-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(2rem, 5vw, 4rem);
+          font-weight: 300; color: var(--forest);
+          line-height: 1; margin-bottom: 0.25rem;
+        }
+        .today-full-date { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        .today-temp-row {
+          display: flex; align-items: flex-end; gap: 1rem;
+          margin-bottom: 1.25rem; flex-wrap: wrap;
+        }
+        .today-temp {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(4rem, 10vw, 8rem);
+          font-weight: 300; color: var(--forest);
+          line-height: 1; letter-spacing: -0.02em;
+        }
+        .today-temp-unit {
+          font-size: clamp(1.5rem, 3vw, 2.5rem);
+          color: var(--sage); margin-bottom: 0.75rem;
+        }
         .today-label { font-size: 1rem; color: var(--forest); margin-bottom: 0.25rem; font-weight: 500; }
-        .today-highlow { font-size: 1.5rem; color: var(--muted); letter-spacing: 0.05em; }
+        .today-highlow { font-size: clamp(1rem, 2.5vw, 1.5rem); color: var(--muted); letter-spacing: 0.05em; }
         .today-highlow strong { color: var(--forest); }
-        .today-desc { font-size: 0.9rem; line-height: 1.8; color: var(--muted); max-width: 52ch; border-top: 1px solid rgba(45,74,45,0.1); padding-top: 1.5rem; margin-top: 0.5rem; font-style: italic; }
 
-        .today-right { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
-        .today-icon-wrap { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; animation: floatIcon 5s ease-in-out infinite; }
-        @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .today-desc {
+          font-size: 0.9rem; line-height: 1.8;
+          color: var(--muted); max-width: 52ch;
+          border-top: 1px solid rgba(45,74,45,0.1);
+          padding-top: 1.5rem; margin-top: 0.5rem;
+          font-style: italic;
+        }
 
-        .today-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(45,74,45,0.08); width: 100%; }
-        .today-stat { background: rgba(255,255,255,0.6); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; }
-        .today-stat-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sage); display: flex; align-items: center; gap: 0.35rem; }
-        .today-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; color: var(--forest); }
+        .today-right {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 2rem;
+        }
+        .today-icon-wrap {
+          width: 120px; height: 120px;
+          display: flex; align-items: center; justify-content: center;
+          animation: floatIcon 5s ease-in-out infinite;
+          flex-shrink: 0;
+        }
+        @keyframes floatIcon {
+          0%,100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
 
-        .sun-strip { display: flex; gap: 1.5rem; margin-top: 1.5rem; padding: 1.1rem 1.5rem; background: rgba(255,255,255,0.55); border: 1px solid rgba(45,74,45,0.1); border-radius: 3px; }
-        .sun-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; color: var(--muted); }
+        .today-stats {
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 1px; background: rgba(45,74,45,0.08); width: 100%;
+        }
+        .today-stat {
+          background: rgba(255,255,255,0.6);
+          padding: 0.9rem 1.1rem;
+          display: flex; flex-direction: column; gap: 0.3rem;
+        }
+        .today-stat-label {
+          font-size: 0.62rem; letter-spacing: 0.15em;
+          text-transform: uppercase; color: var(--sage);
+          display: flex; align-items: center; gap: 0.35rem;
+        }
+        .today-stat-val {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.4rem; font-weight: 300; color: var(--forest);
+        }
+
+        /* ── SUN STRIP ── */
+        .sun-strip {
+          display: flex; gap: 1.5rem; flex-wrap: wrap;
+          margin-top: 1.5rem; padding: 1.1rem 1.5rem;
+          background: rgba(255,255,255,0.55);
+          border: 1px solid rgba(45,74,45,0.1); border-radius: 3px;
+        }
+        .sun-item {
+          display: flex; align-items: center; gap: 0.6rem;
+          font-size: 0.8rem; color: var(--muted);
+          white-space: nowrap;
+        }
         .sun-item strong { color: var(--forest); font-weight: 500; }
-        .sun-divider { width: 1px; background: rgba(45,74,45,0.1); }
+        .sun-divider { width: 1px; background: rgba(45,74,45,0.1); flex-shrink: 0; }
+        @media (max-width: 360px) {
+          .sun-strip { flex-direction: column; gap: 0.75rem; }
+          .sun-divider { display: none; }
+        }
 
-        /* ── WEEK GRID MODIFICAT PENTRU ALINIERE PE CENTRU ── */
+        /* ── WEEK GRID ── */
         .week-grid {
-          display: grid; 
-          grid-template-columns: repeat(5, 1fr); /* Schimbat din 6 in 5 coloane */
-          justify-content: center;               /* Centrează coloanele în container */
-          gap: 2px; 
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 2px;
           background: rgba(45,74,45,0.08);
           animation: fadeUp 0.8s 0.2s ease both;
           width: 100%;
+          margin-bottom: 0;
         }
-        @media (max-width: 900px) { .week-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 600px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 400px) { .week-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) {
+          .week-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 520px) {
+          .week-grid { grid-template-columns: repeat(2, 1fr); }
+        }
 
         .day-card {
           background: rgba(255,255,255,0.48);
           backdrop-filter: blur(12px);
           padding: 1.5rem 1rem;
-          display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
-          cursor: pointer; transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+          display: flex; flex-direction: column;
+          align-items: center; gap: 0.75rem;
+          cursor: pointer;
+          transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
           border: 1px solid transparent;
+          /* Prevents ugly partial columns */
+          min-width: 0;
         }
         .day-card:hover {
           background: rgba(255,255,255,0.72);
@@ -431,8 +611,14 @@ export default function MeteoPage() {
           background: rgba(196,154,60,0.14);
           border-color: rgba(196,154,60,0.4);
         }
+        @media (max-width: 520px) {
+          .day-card { padding: 1.25rem 0.75rem; }
+        }
 
-        .day-name { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sage); font-weight: 500; }
+        .day-name {
+          font-size: 0.65rem; letter-spacing: 0.18em;
+          text-transform: uppercase; color: var(--sage); font-weight: 500;
+        }
         .day-date-small { font-size: 0.72rem; color: var(--muted); }
         .day-icon { margin: 0.25rem 0; }
         .day-label-small { font-size: 0.7rem; color: var(--muted); text-align: center; line-height: 1.3; }
@@ -447,31 +633,76 @@ export default function MeteoPage() {
           background: rgba(255,255,255,0.55);
           border: 1px solid rgba(255,255,255,0.75);
           padding: 2rem;
-          display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 1.5rem;
           animation: fadeUp 0.35s ease both;
           backdrop-filter: blur(16px);
         }
-        @media (max-width: 700px) { .detail-panel { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 400px) { .detail-panel { grid-template-columns: 1fr; } }
+        @media (max-width: 700px) {
+          .detail-panel { grid-template-columns: 1fr 1fr; padding: 1.5rem; }
+        }
+        @media (max-width: 400px) {
+          .detail-panel { grid-template-columns: 1fr; }
+        }
 
         .detail-item { display: flex; flex-direction: column; gap: 0.3rem; }
-        .detail-item-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sage); display: flex; align-items: center; gap: 0.35rem; }
-        .detail-item-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: var(--forest); }
+        .detail-item-label {
+          font-size: 0.62rem; letter-spacing: 0.15em;
+          text-transform: uppercase; color: var(--sage);
+          display: flex; align-items: center; gap: 0.35rem;
+        }
+        .detail-item-val {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.6rem; font-weight: 300; color: var(--forest);
+        }
 
         /* ── FOOTER ── */
-        footer { background: var(--dark); color: rgba(255,255,255,0.6); padding: 3rem 2rem 2rem; margin-top: auto; }
-        .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 300; color: #fff; }
+        footer {
+          background: var(--dark);
+          color: rgba(255,255,255,0.6);
+          padding: 3rem 2rem 2rem;
+        }
+        @media (max-width: 480px) {
+          footer { padding: 2rem 1rem 1.5rem; }
+        }
+        .footer-inner {
+          max-width: 1200px; margin: 0 auto;
+          display: flex; flex-wrap: wrap;
+          justify-content: space-between; align-items: flex-start;
+          gap: 2rem; padding-bottom: 2rem;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .footer-brand {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.75rem; font-weight: 300; color: #fff;
+        }
         .footer-brand span { color: var(--gold); }
         .footer-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
         .footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
-        .footer-links a { font-size: 0.82rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+        .footer-links a {
+          font-size: 0.82rem; color: rgba(255,255,255,0.5);
+          text-decoration: none; transition: color 0.2s;
+        }
         .footer-links a:hover { color: var(--wheat); }
-        .footer-bottom { max-width: 1200px; margin: 1.5rem auto 0; display: flex; flex-wrap: wrap; justify-content: space-between; font-size: 0.72rem; color: rgba(255,255,255,0.25); }
+        .footer-bottom {
+          max-width: 1200px; margin: 1.5rem auto 0;
+          display: flex; flex-wrap: wrap;
+          justify-content: space-between; gap: 0.5rem;
+          font-size: 0.72rem; color: rgba(255,255,255,0.25);
+        }
 
+        /* ── ANIMATIONS ── */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── REDUCED MOTION ── */
+        @media (prefers-reduced-motion: reduce) {
+          .today-icon-wrap { animation: none; }
+          .today-card, .week-grid { animation: none; }
+          .day-card:hover { transform: none; }
         }
       `}</style>
 
@@ -483,14 +714,23 @@ export default function MeteoPage() {
                         <li key={l.label}><a href={l.href}>{l.label}</a></li>
                     ))}
                 </ul>
-                <button className="hamburger" onClick={() => setMenuOpen(true)} aria-label="Meniu">
+                <button
+                    className={`hamburger ${menuOpen ? "is-open" : ""}`}
+                    onClick={() => setMenuOpen(o => !o)}
+                    aria-label={menuOpen ? "Închide meniu" : "Deschide meniu"}
+                    aria-expanded={menuOpen}
+                >
                     <span /><span /><span />
                 </button>
             </nav>
 
-            <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-                <button style={{ position:"absolute", top:"1.5rem", right:"2rem", background:"none", border:"none", fontSize:"2rem", cursor:"pointer", color:"var(--forest)" }} onClick={() => setMenuOpen(false)}>×</button>
-                {navLinks.map((l) => <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)}>{l.label}</a>)}
+            {/* ── MOBILE MENU ── */}
+            <div className={`mobile-menu ${menuOpen ? "open" : ""}`} role="dialog" aria-modal="true">
+                {navLinks.map((l) => (
+                    <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)}>
+                        {l.label}
+                    </a>
+                ))}
             </div>
 
             {/* ── WEATHER SECTION ── */}
@@ -516,7 +756,7 @@ export default function MeteoPage() {
 
                             <div className="today-temp-row">
                                 <div className="today-temp">{TODAY.high}</div>
-                                <div style={{ display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:"1rem" }}>
+                                <div style={{ display:"flex", flexDirection:"column", justifyContent:"flex-end", paddingBottom:"0.75rem" }}>
                                     <span className="today-temp-unit">°C</span>
                                 </div>
                                 <div>
@@ -557,7 +797,7 @@ export default function MeteoPage() {
                                 </div>
                                 <div className="today-stat">
                                     <span className="today-stat-label"><IconDroplet />Precipitații</span>
-                                    <span className="today-stat-val">{TODAY.precipitation}mm</span>
+                                    <span className="today-stat-val">{TODAY.precipitation}%</span>
                                 </div>
                                 <div className="today-stat">
                                     <span className="today-stat-label"><IconEye />Vizibilitate</span>
@@ -583,6 +823,9 @@ export default function MeteoPage() {
                                 <span className="day-label-small">{day.label}</span>
                                 <div className="day-temps">
                                     <span className="day-high" style={{ color: tempColor(day.high) }}>{day.high}°</span>
+                                    {day.low !== 0 && (
+                                        <span className="day-low">{day.low}°</span>
+                                    )}
                                 </div>
                                 {day.precipitation > 0 && (
                                     <span className="day-precip">
