@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { notFound } from 'next/navigation';
 
 type WeatherData = {
     location: {
@@ -27,7 +26,7 @@ type WeatherData = {
     };
 };
 
-// ─── SVG Weather Icons (fără Math.cos/sin — coords hardcoded) ─────────────────
+// ─── SVG Weather Icons ────────────────────────────────────────────────────────
 const IconSunny = ({ size = 48 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="24" cy="24" r="9" fill="#c49a3c" opacity="0.95" />
@@ -106,12 +105,6 @@ const IconDroplet = ({ size = 16 }: { size?: number }) => (
     </svg>
 );
 
-const IconThermometer = ({ size = 16 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
-    </svg>
-);
-
 const IconEye = ({ size = 16 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -143,8 +136,6 @@ interface TodayWeather extends DayWeather {
     feelsLike: number; visibility: number; sunrise: string; sunset: string; description: string;
 }
 
-
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function WeatherIconComp({ type, size }: { type: WeatherIcon; size?: number }) {
     switch (type) {
@@ -162,35 +153,38 @@ function tempColor(temp: number): string {
     if (temp >= 7)  return "#5a8aaa";
     return "#7a9aaa";
 }
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function MeteoPage() {
-
-    const [weatherApi,setWeatherApi]=useState<WeatherData | null>(null);
-
-    const [scrolled,    setScrolled]    = useState(false);
-    const [menuOpen,    setMenuOpen]    = useState(false);
+    const [weatherApi, setWeatherApi] = useState<WeatherData | null>(null);
+    const [scrolled, setScrolled] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const [selectedDay, setSelectedDay] = useState<DayWeather | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const getWeatherData = async () =>{
-            try{
-                const res = await fetch('/api/meteo');
-                const jsonData= await res.json();
+        const getWeatherData = async () => {
+            try {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+                const res = await fetch(`${baseUrl}/api/meteo`);
+
+                if (!res.ok) {
+                    throw new Error(`Eroare HTTP! Status: ${res.status}`);
+                }
+
+                const jsonData = await res.json();
                 setWeatherApi(jsonData);
-            } catch (error){
+            } catch (error) {
                 console.error("Fetch error:", error);
             } finally {
                 setLoading(false);
             }
         }
-
         getWeatherData();
 
         const onScroll = () => setScrolled(window.scrollY > 80);
         window.addEventListener("scroll", onScroll);
         return () => window.removeEventListener("scroll", onScroll);
-
     }, []);
 
     if (loading) {
@@ -200,6 +194,7 @@ export default function MeteoPage() {
             </div>
         );
     }
+
     const today = new Date();
     const dayNames = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
 
@@ -210,40 +205,36 @@ export default function MeteoPage() {
             month: '2-digit',
             year: 'numeric'
         }).format(today),
-
         icon: "sunny",
         label: "Vreme frumoasă",
         description: "Cer mai mult senin.",
-
         high: weatherApi ? Math.round(weatherApi.current.temperature_2m) : 0,
         low: 0,
-
         feelsLike: weatherApi ? Math.round(weatherApi.current.apparent_temperature) : 0,
         humidity: weatherApi ? weatherApi.current.relative_humidity_2m : 0,
         wind: weatherApi ? Math.round(weatherApi.current.wind_speed_10m) : 0,
-        precipitation: weatherApi ? weatherApi.current.rain : 0,
+        precipitation: weatherApi?.daily?.precipitation_probability_max?.[0] ?? 0,
         visibility: 10,
-
-        sunrise: weatherApi
-            ? new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', {
-                hour: '2-digit',
-                minute: '2-digit'
-            })
+        sunrise: weatherApi && weatherApi.daily.sunrise[0]
+            ? weatherApi.daily.sunrise[0].includes('T')
+                ? weatherApi.daily.sunrise[0].split('T')[1].slice(0, 5) // Extrage direct "HH:MM" din string
+                : new Date(weatherApi.daily.sunrise[0]).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
             : "--:--",
 
-        sunset: weatherApi
-            ? new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', {
-                hour: '2-digit',
-                minute: '2-digit'
-            })
-            : "--:--",
-    };
+        sunset: weatherApi && weatherApi.daily.sunset[0]
+            ? weatherApi.daily.sunset[0].includes('T')
+                ? weatherApi.daily.sunset[0].split('T')[1].slice(0, 5) // Extrage direct "HH:MM" din string
+                : new Date(weatherApi.daily.sunset[0]).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
+            : "--:--",};
     const WEEK: DayWeather[] = [];
 
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 5; i++) {
         const futureDate = new Date(today);
         futureDate.setDate(today.getDate() + i);
         const dayIndex = futureDate.getDay();
+
+        const rawHigh = weatherApi?.daily?.temperature_2m_max?.[i] ?? 0;
+        const rawLow  = weatherApi?.daily?.temperature_2m_min?.[i] ?? 0;
 
         WEEK.push({
             day: dayNames[dayIndex],
@@ -252,22 +243,22 @@ export default function MeteoPage() {
                 month: 'short'
             }),
             icon: "cloudy",
-            label: "—",
+            label: "",
 
-            high: weatherApi ? weatherApi.daily.temperature_2m_max[i] : 0,
-            low: weatherApi ? weatherApi.daily.temperature_2m_min[i] : 0,
-            humidity: 0,
+            high: Math.round(rawHigh),
+            low: Math.round(rawLow),
+
+            humidity: 100,
             wind: 0,
             precipitation: weatherApi ? weatherApi.daily.precipitation_probability_max[i] : 0,
         });
     }
+
     const navLinks = [
         { label: "Acasă",      href: "/" },
-        { label: "Istorie",    href: "/#despre" },
-        { label: "Natură",     href: "/#natura" },
         { label: "Comunitate", href: "/#comunitate" },
         { label: "Evenimente", href: "/#evenimente" },
-        { label: "Contactt",    href: "/#contact" },
+        { label: "Contact",    href: "/#contact" },
     ];
 
     return (
@@ -336,12 +327,6 @@ export default function MeteoPage() {
         .mobile-menu a { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--forest); text-decoration: none; }
         @media (max-width: 768px) { .nav-links { display: none; } .hamburger { display: flex; } }
 
-        /* ─────────────────────────────────────────────────────────
-           GRADIENT DE PRIMĂVARĂ
-           Sus: albastru-cer clar → verde-mentă proaspăt
-           Mijloc: galben-soare cald → piersică ușoară
-           Jos: se dizolvă în cremul paginii
-        ───────────────────────────────────────────────────────── */
         .weather-hero {
           min-height: 100vh;
           background: linear-gradient(
@@ -358,7 +343,6 @@ export default function MeteoPage() {
           position: relative; overflow: hidden; padding: 7rem 2rem 5rem;
         }
 
-        /* nori albi decorativi */
         .weather-hero::after {
           content: '';
           position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -368,22 +352,12 @@ export default function MeteoPage() {
             radial-gradient(ellipse 45% 22% at 55% 30%, rgba(255,255,255,0.3) 0%, transparent 70%);
         }
 
-        .weather-hills {
-          position: absolute; bottom: 0; left: 0; right: 0; pointer-events: none; z-index: 1;
-        }
+        .weather-hills { position: absolute; bottom: 0; left: 0; right: 0; pointer-events: none; z-index: 1; }
+        .weather-inner { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; width: 100%; }
 
-        .weather-inner {
-          position: relative; z-index: 2;
-          max-width: 1200px; margin: 0 auto; width: 100%;
-        }
-
-        /* ── EYEBROW ── */
         .w-eyebrow { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 3rem; }
         .w-eyebrow-line { width: 2rem; height: 1px; background: rgba(45,74,45,0.3); }
-        .w-eyebrow span {
-          font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-          color: rgba(45,74,45,0.6); font-weight: 500;
-        }
+        .w-eyebrow span { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(45,74,45,0.6); font-weight: 500; }
 
         /* ── TODAY CARD ── */
         .today-card {
@@ -399,78 +373,45 @@ export default function MeteoPage() {
         }
         @media (max-width: 700px) { .today-card { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; } }
 
-        .today-date-label {
-          font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-          color: var(--sage); margin-bottom: 0.5rem;
-        }
-        .today-day-name {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(2.5rem, 5vw, 4rem);
-          font-weight: 300; color: var(--forest); line-height: 1; margin-bottom: 0.25rem;
-        }
+        .today-date-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sage); margin-bottom: 0.5rem; }
+        .today-day-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300; color: var(--forest); line-height: 1; margin-bottom: 0.25rem; }
         .today-full-date { font-size: 0.85rem; color: var(--muted); margin-bottom: 2rem; }
 
         .today-temp-row { display: flex; align-items: flex-end; gap: 1.5rem; margin-bottom: 1.25rem; }
-        .today-temp {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(5rem, 10vw, 8rem);
-          font-weight: 300; color: var(--forest); line-height: 1; letter-spacing: -0.02em;
-        }
+        .today-temp { font-family: 'Cormorant Garamond', serif; font-size: clamp(5rem, 10vw, 8rem); font-weight: 300; color: var(--forest); line-height: 1; letter-spacing: -0.02em; }
         .today-temp-unit { font-size: 2.5rem; color: var(--sage); margin-bottom: 1rem; }
         .today-label { font-size: 1rem; color: var(--forest); margin-bottom: 0.25rem; font-weight: 500; }
         .today-highlow { font-size: 1.5rem; color: var(--muted); letter-spacing: 0.05em; }
         .today-highlow strong { color: var(--forest); }
-
-        .today-desc {
-          font-size: 0.9rem; line-height: 1.8; color: var(--muted); max-width: 52ch;
-          border-top: 1px solid rgba(45,74,45,0.1); padding-top: 1.5rem;
-          margin-top: 0.5rem; font-style: italic;
-        }
+        .today-desc { font-size: 0.9rem; line-height: 1.8; color: var(--muted); max-width: 52ch; border-top: 1px solid rgba(45,74,45,0.1); padding-top: 1.5rem; margin-top: 0.5rem; font-style: italic; }
 
         .today-right { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
-        .today-icon-wrap {
-          width: 120px; height: 120px;
-          display: flex; align-items: center; justify-content: center;
-          animation: floatIcon 5s ease-in-out infinite;
-        }
+        .today-icon-wrap { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; animation: floatIcon 5s ease-in-out infinite; }
         @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-        .today-stats {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
-          background: rgba(45,74,45,0.08); width: 100%;
-        }
-        .today-stat {
-          background: rgba(255,255,255,0.6); padding: 1rem 1.25rem;
-          display: flex; flex-direction: column; gap: 0.3rem;
-        }
-        .today-stat-label {
-          font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
-          color: var(--sage); display: flex; align-items: center; gap: 0.35rem;
-        }
-        .today-stat-val {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.4rem; font-weight: 300; color: var(--forest);
-        }
+        .today-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(45,74,45,0.08); width: 100%; }
+        .today-stat { background: rgba(255,255,255,0.6); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; }
+        .today-stat-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sage); display: flex; align-items: center; gap: 0.35rem; }
+        .today-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; color: var(--forest); }
 
-        .sun-strip {
-          display: flex; gap: 1.5rem; margin-top: 1.5rem;
-          padding: 1.1rem 1.5rem;
-          background: rgba(255,255,255,0.55);
-          border: 1px solid rgba(45,74,45,0.1);
-          border-radius: 3px;
-        }
+        .sun-strip { display: flex; gap: 1.5rem; margin-top: 1.5rem; padding: 1.1rem 1.5rem; background: rgba(255,255,255,0.55); border: 1px solid rgba(45,74,45,0.1); border-radius: 3px; }
         .sun-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; color: var(--muted); }
         .sun-item strong { color: var(--forest); font-weight: 500; }
         .sun-divider { width: 1px; background: rgba(45,74,45,0.1); }
 
-        /* ── WEEK GRID ── */
+        /* ── WEEK GRID MODIFICAT PENTRU ALINIERE PE CENTRU ── */
         .week-grid {
-          display: grid; grid-template-columns: repeat(6, 1fr);
-          gap: 2px; background: rgba(45,74,45,0.08);
+          display: grid; 
+          grid-template-columns: repeat(5, 1fr); /* Schimbat din 6 in 5 coloane */
+          justify-content: center;               /* Centrează coloanele în container */
+          gap: 2px; 
+          background: rgba(45,74,45,0.08);
           animation: fadeUp 0.8s 0.2s ease both;
+          width: 100%;
         }
-        @media (max-width: 900px) { .week-grid { grid-template-columns: repeat(3,1fr); } }
-        @media (max-width: 500px) { .week-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 900px) { .week-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 400px) { .week-grid { grid-template-columns: 1fr; } }
 
         .day-card {
           background: rgba(255,255,255,0.48);
@@ -514,33 +455,19 @@ export default function MeteoPage() {
         @media (max-width: 400px) { .detail-panel { grid-template-columns: 1fr; } }
 
         .detail-item { display: flex; flex-direction: column; gap: 0.3rem; }
-        .detail-item-label {
-          font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
-          color: var(--sage); display: flex; align-items: center; gap: 0.35rem;
-        }
-        .detail-item-val {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.6rem; font-weight: 300; color: var(--forest);
-        }
+        .detail-item-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sage); display: flex; align-items: center; gap: 0.35rem; }
+        .detail-item-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: var(--forest); }
 
         /* ── FOOTER ── */
-        footer { background: var(--dark); color: rgba(255,255,255,0.6); padding: 3rem 2rem 2rem; }
-        .footer-inner {
-          max-width: 1200px; margin: 0 auto;
-          display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
-          gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
+        footer { background: var(--dark); color: rgba(255,255,255,0.6); padding: 3rem 2rem 2rem; margin-top: auto; }
+        .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 300; color: #fff; }
         .footer-brand span { color: var(--gold); }
         .footer-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
         .footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
         .footer-links a { font-size: 0.82rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
         .footer-links a:hover { color: var(--wheat); }
-        .footer-bottom {
-          max-width: 1200px; margin: 1.5rem auto 0;
-          display: flex; flex-wrap: wrap; justify-content: space-between;
-          font-size: 0.72rem; color: rgba(255,255,255,0.25);
-        }
+        .footer-bottom { max-width: 1200px; margin: 1.5rem auto 0; display: flex; flex-wrap: wrap; justify-content: space-between; font-size: 0.72rem; color: rgba(255,255,255,0.25); }
 
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -568,8 +495,6 @@ export default function MeteoPage() {
 
             {/* ── WEATHER SECTION ── */}
             <section className="weather-hero">
-
-                {/* Dealuri verzi la bază */}
                 <svg className="weather-hills" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M0,100 C200,55 420,130 620,90 C820,50 1060,120 1240,82 C1330,65 1400,100 1440,88 L1440,160 L0,160 Z" fill="rgba(90,140,90,0.15)" />
                     <path d="M0,120 C260,88 520,145 780,118 C1020,94 1230,138 1440,120 L1440,160 L0,160 Z" fill="rgba(45,100,45,0.18)" />
@@ -577,7 +502,6 @@ export default function MeteoPage() {
                 </svg>
 
                 <div className="weather-inner">
-
                     <div className="w-eyebrow">
                         <div className="w-eyebrow-line" />
                         <span>Cristești, Nisporeni · Prognoza Meteo</span>
@@ -597,8 +521,6 @@ export default function MeteoPage() {
                                 </div>
                                 <div>
                                     <div className="today-label">{TODAY.label}</div>
-                                    <div className="today-highlow">
-                                    </div>
                                     <div className="today-highlow" style={{ marginTop:"0.25rem" }}>
                                         Se simte ca <strong>{TODAY.feelsLike}°C</strong>
                                     </div>
@@ -656,7 +578,7 @@ export default function MeteoPage() {
                                 <span className="day-name">{day.day}</span>
                                 <span className="day-date-small">{day.date}</span>
                                 <div className="day-icon">
-                                    <WeatherIconComp type={day.icon} size={38} />
+                                    <WeatherIconComp type={day.icon} size={40} />
                                 </div>
                                 <span className="day-label-small">{day.label}</span>
                                 <div className="day-temps">
@@ -675,28 +597,19 @@ export default function MeteoPage() {
                     {selectedDay && (
                         <div className="detail-panel">
                             <div className="detail-item">
-                                <span className="detail-item-label"><IconThermometer />Maximă / Minimă</span>
-                                <span className="detail-item-val">{selectedDay.high}° / {selectedDay.low}°</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-item-label"><IconDroplet />Umiditate</span>
+                                <span className="detail-item-label"><IconDroplet />Umiditate maximă</span>
                                 <span className="detail-item-val">{selectedDay.humidity}%</span>
                             </div>
                             <div className="detail-item">
-                                <span className="detail-item-label"><IconWind />Vânt</span>
+                                <span className="detail-item-label"><IconWind />Vânt estimat</span>
                                 <span className="detail-item-val">{selectedDay.wind} km/h</span>
                             </div>
                             <div className="detail-item">
-                                <span className="detail-item-label"><IconDroplet />Precipitații</span>
+                                <span className="detail-item-label"><IconDroplet />Probabilitate precipitații</span>
                                 <span className="detail-item-val">{selectedDay.precipitation}%</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-item-label">Condiții</span>
-                                <span className="detail-item-val">{selectedDay.label}</span>
                             </div>
                         </div>
                     )}
-
                 </div>
             </section>
 
@@ -704,22 +617,16 @@ export default function MeteoPage() {
             <footer>
                 <div className="footer-inner">
                     <div>
-                        <div className="footer-brand">Cristești</div>
-                        <div className="footer-tagline">Raionul Nisporeni · Republica Moldova</div>
+                        <div className="footer-brand">Cristești<span>.</span></div>
+                        <div className="footer-tagline">Portalul informativ al comunității locale.</div>
                     </div>
                     <div className="footer-links">
-                        <strong style={{ color:"rgba(255,255,255,0.6)", fontSize:"0.7rem", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:"0.5rem", display:"block" }}>Navigare</strong>
-                        {navLinks.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
-                    </div>
-                    <div className="footer-links">
-                        <strong style={{ color:"rgba(255,255,255,0.6)", fontSize:"0.7rem", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:"0.5rem", display:"block" }}>Contact</strong>
-                        <a href="mailto:contact@cristesti.md">contact@cristesti.md</a>
-                        <a href="#">Primăria Cristești</a>
+                        {navLinks.map((l) => <a key={l.label} href={l.href}>{l.label}</a>)}
                     </div>
                 </div>
                 <div className="footer-bottom">
-                    <span>© {new Date().getFullYear()} Cristești, Raionul Nisporeni</span>
-                    <span>Prisacaru Savelie</span>
+                    <div>&copy; {new Date().getFullYear()} Cristești. Toate drepturile rezervate.</div>
+                    <div>Proiect realizat cu Next.js</div>
                 </div>
             </footer>
         </>
