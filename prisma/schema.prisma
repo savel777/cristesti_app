@@ -1,0 +1,14 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url= "mysql://avnadmin:AVNS_ry_vm2kDjvShwayXbit@mysql-393b357b-savapr888-b5bb.g.aivencloud.com:12973/defaultdb?ssl-mode=REQUIRED"
+}
+
+model GhidTelefon {
+  id          Int    @id @default(autoincrement())
+  numePrenume String
+  numar       String
+}

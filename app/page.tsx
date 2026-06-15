@@ -93,20 +93,20 @@ export default function HomePage() {
     { label: "Istorie", href: "#despre" },
     { label: "Meteo", href: "/meteo" },
     { label: "Harta", href: "#comunitate" },
-    { label: "Contact", href: "#contact" },
+    { label: "Contacte", href: "/contact" },
   ];
 
   const features = [
-    { icon: <IconLeaf />, title: "Natură curată", desc: "Dealuri verzi, livezi înflorite și aer curat de câmpie moldovenească." },
-    { icon: <IconHome />, title: "Tradiții vii", desc: "Obiceiuri transmise din generație în generație, păstrate cu mândrie." },
-    { icon: <IconUsers />, title: "Comunitate unită", desc: "Oameni calzi, ospitalieri, gata să te întâmpine cu suflet deschis." },
-    { icon: <IconSun />, title: "Viață autentică", desc: "Ritmul blând al satului, departe de agitația orașului." },
+    { icon: <IconLeaf />, title: "Natură curată", desc: "Dealuri verzi ale Podișului Moldovei Centrale, livezi înflorite și aer curat de câmpie moldovenească." },
+    { icon: <IconHome />, title: "Tradiții vii", desc: "Obiceiuri transmise din generație în generație încă din anul 1429, când satul a fost atestat pentru prima dată." },
+    { icon: <IconUsers />, title: "Comunitate unită", desc: "Peste 1.200 de suflete — oameni calzi, ospitalieri, gata să te întâmpine cu drag." },
+    { icon: <IconSun />, title: "Viață autentică", desc: "Ritmul blând al satului, la 10 km de Nisporeni și 70 km de Chișinău, departe de agitația orașului." },
   ];
 
   const events = [
-    { date: "24 Jun", month: "2025", title: "Sânzienele — Noaptea Florilor", desc: "Tradiția legării coroanelor din flori de câmp și aprinderea focurilor rituale." },
-    { date: "15 Aug", month: "2025", title: "Hramul Satului", desc: "Sărbătoarea patronului spiritual al Cristeștilor, cu muzică live și mese festive." },
-    { date: "01 Oct", month: "2025", title: "Festivalul Recoltei", desc: "Expoziție de produse tradiționale: vin, must, legume și dulcețuri de casă." },
+    { date: "24 Jun", month: "2025", title: "Sânzienele — Noaptea Florilor", desc: "Tradiția legării coroanelor din flori de câmp și aprinderea focurilor rituale, moștenită din vremuri străvechi." },
+    { date: "29 Aug", month: "2025", title: "Hramul Satului", desc: "Sărbătoarea patronului spiritual al Cristeștilor, cu muzică live, mese festive și întâlnirea comunității." },
+    { date: "01 Oct", month: "2025", title: "Festivalul Recoltei", desc: "Expoziție de produse tradiționale: vin, must, legume și dulcețuri de casă din gospodăriile locale." },
   ];
 
   return (
@@ -144,7 +144,6 @@ export default function HomePage() {
           padding: 1.25rem 2rem;
           display: flex; align-items: center; justify-content: space-between;
           transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-          /* Complet invizibil când suntem sus */
           background: transparent;
           backdrop-filter: none;
           opacity: 0;
@@ -217,13 +216,11 @@ export default function HomePage() {
           position: relative; overflow: hidden;
         }
 
-        /* Rolling hills SVG layer */
         .hero-hills {
           position: absolute; bottom: 0; left: 0; right: 0;
           pointer-events: none;
         }
 
-        /* Grain overlay */
         .hero::before {
           content: '';
           position: absolute; inset: 0;
@@ -290,7 +287,6 @@ export default function HomePage() {
         }
         .btn-ghost:hover { border-color: rgba(255,255,255,0.7); color: #fff; }
 
-        /* Right side decorative card */
         .hero-card {
           background: rgba(255,255,255,0.08);
           backdrop-filter: blur(16px);
@@ -478,6 +474,22 @@ export default function HomePage() {
           border: 2px solid var(--sage); border-radius: 50%; opacity: 0.25;
         }
 
+        /* ── LEGEND BOX ── */
+        .legend-box {
+          background: var(--wheat); border-left: 3px solid var(--gold);
+          padding: 1.25rem 1.5rem; margin-top: 2rem; border-radius: 0 4px 4px 0;
+        }
+        .legend-box-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1rem; font-weight: 600; color: var(--forest);
+          margin-bottom: 0.5rem;
+        }
+        .legend-box p {
+          font-size: 0.85rem !important; line-height: 1.7 !important;
+          color: var(--earth) !important; margin-bottom: 0 !important;
+          font-style: italic;
+        }
+
         /* ── EVENTS ── */
         .events-section { background: #f0ece0; padding: 6rem 2rem; }
         .events-inner { max-width: 1200px; margin: 0 auto; }
@@ -622,14 +634,15 @@ export default function HomePage() {
             <div>
               <div className="hero-eyebrow fade-up">
                 <div className="hero-eyebrow-line" />
-                <span>Raionul Nisporeni · Republica Moldova</span>
+                {/* Distanța corectă: 10 km față de Nisporeni, 70 km față de Chișinău */}
+                <span>Raionul Nisporeni · Republica Moldova · 70 km de Chișinău</span>
               </div>
               <h1 className="hero-title fade-up delay-1">
                 Bine ai venit în
                 <em>Cristești</em>
               </h1>
               <p className="hero-sub fade-up delay-2">
-                Un sat cu suflet mare, ascuns printre dealurile verzi ale Moldovei.
+                Sat atestat documentar în 1429, cuibărit pe dealurile verzi ale Podișului Moldovei Centrale.
                 Locul unde timpul curge mai blând și tradițiile rămân vii.
               </p>
               <div className="hero-actions fade-up delay-3">
@@ -643,16 +656,17 @@ export default function HomePage() {
             <div className="fade-up delay-4">
               <div className="hero-card">
                 <div className="hero-card-label">Cristești în cifre</div>
+                {/* Date reale din recensământul 2004, sursa: moldovenii.md */}
                 <div className="hero-stat">
-                  <span className="hero-stat-num">~400</span>
-                  <div className="hero-stat-desc">locuitori care numesc<br />Cristeștii acasă</div>
+                  <span className="hero-stat-num">1.208</span>
+                  <div className="hero-stat-desc">locuitori înregistrați<br />(recensământ 2004)</div>
                 </div>
                 <div className="hero-stat">
-                  <span className="hero-stat-num">XVIII</span>
-                  <div className="hero-stat-desc">secol — atestare<br />documentară</div>
+                  <span className="hero-stat-num">1429</span>
+                  <div className="hero-stat-desc">prima atestare<br />documentară</div>
                 </div>
                 <div className="hero-stat">
-                  <span className="hero-stat-num">12 km</span>
+                  <span className="hero-stat-num">10 km</span>
                   <div className="hero-stat-desc">față de centrul<br />raionului Nisporeni</div>
                 </div>
               </div>
@@ -669,9 +683,9 @@ export default function HomePage() {
         <div className="location-strip">
           {[
             { icon: <IconMapPin />, text: "Raionul Nisporeni, Moldova" },
-            { icon: <IconLeaf />, text: "Sat pitoresc în centrul Moldovei" },
-            { icon: <IconSun />, text: "Climat temperat continental" },
-            { icon: <IconHome />, text: "Tradiții și ospitalitate" },
+            { icon: <IconLeaf />, text: "Podișul Moldovei Centrale" },
+            { icon: <IconSun />, text: "Climă temperat-continentală" },
+            { icon: <IconHome />, text: "Atestat din anul 1429" },
           ].map((item, i) => (
               <div className="location-item" key={i}>{item.icon}<span>{item.text}</span></div>
           ))}
@@ -684,7 +698,7 @@ export default function HomePage() {
               <div className="eyebrow-line" />
               <span className="eyebrow-text">Povestea noastră</span>
             </div>
-            <h2 className="section-title">Un sat cu rădăcini<br /><em>adânci în pământ moldav</em></h2>
+            <h2 className="section-title">Un sat cu rădăcini<br /><em>adânci în pământul moldav din 1429</em></h2>
 
             <div className="features-grid" style={{ marginTop: "3.5rem" }}>
               {features.map((f, i) => (
@@ -699,13 +713,14 @@ export default function HomePage() {
         </div>
 
         {/* ── STATS BAND ── */}
+        {/* Date reale: 1208 loc., atestat 1429 (595+ ani), 10 km Nisporeni, 407 gospodării */}
         <div className="stats-band">
           <div className="stats-inner">
             {[
-              { num: 400, suf: "+", label: "Locuitori" },
-              { num: 300, suf: "+", label: "Ani de istorie" },
-              { num: 12, suf: " km", label: "Până la Nisporeni" },
-              { num: 3, suf: "", label: "Festivale anuale" },
+              { num: 1208, suf: "", label: "Locuitori (rec. 2004)" },
+              { num: 595, suf: "+", label: "Ani de istorie atestată" },
+              { num: 10, suf: " km", label: "Până la Nisporeni" },
+              { num: 407, suf: "", label: "Gospodării casnice" },
             ].map((s, i) => (
                 <div className="stat-item" key={i}>
                   <span className="stat-number"><Counter target={s.num} suffix={s.suf} /></span>
@@ -727,11 +742,18 @@ export default function HomePage() {
                 <h2 className="section-title" style={{ marginBottom: "2rem" }}>
                   Frumusețea<br /><em>neîntrecută a locului</em>
                 </h2>
-                <p>Cristeștii se cuibărește pe <strong>dealurile blânde</strong> ale raionului Nisporeni, înconjurat de păduri de stejar, livezi roditoare și câmpuri de floarea-soarelui care îngălbenesc vara.</p>
-                <p>Aerul curat, peisajele nealterate și liniștea apăsătoare a naturii fac din sat un colț de rai pentru cei care caută <strong>autenticul vieții de la țară</strong>.</p>
-                <p>Primăvara, dealurile se îmbracă în alb și roz când livezile înfloresc. Toamna, viile oferă struguri bogați, iar aerul miroase a must și pâine coaptă.</p>
+                <p>Cristeștii se cuibărește pe <strong>dealurile Podișului Moldovei Centrale</strong>, o zonă renumită pentru relieful fragmentat de văi adânci, ravene și versanți abrupți — o zonă pe care geograful V. Docuceaev a numit-o „Elveția Basarabeană".</p>
+                <p>Cu o suprafață de circa <strong>1,26 km²</strong> și altitudinea de aproximativ 159 m față de nivelul mării, satul este înconjurat de păduri, livezi și câmpuri care îngălbenesc vara, oferind peisaje de o frumusețe aparte.</p>
+                <p>Aerul curat, liniștea naturii și atmosfera autentică fac din Cristești un colț de rai pentru cei care caută <strong>autenticul vieții moldovenești</strong>. Primăvara, livezile înfloresc în alb și roz; toamna, viile aduc must și pâine coaptă.</p>
+
+                {/* Legenda satului — dată reală */}
+                <div className="legend-box">
+                  <div className="legend-box-title">Legenda numelui Cristești</div>
+                  <p>Se spune că în drumul lor între mănăstirile Vărzărești și Căpriana, călugării se opreau mereu la o răstignire din sat, zicând „la Crist". Locul se numește și azi de localnici <em>„în deal la Cruce"</em>.</p>
+                </div>
+
                 <div style={{ marginTop: "2rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                  {["Păduri de stejar", "Livezi", "Dealuri line", "Vii tradiționale", "Izlaz communal"].map(tag => (
+                  {["Păduri de stejar", "Livezi", "Dealuri line", "Vii tradiționale", "1,26 km² suprafață"].map(tag => (
                       <span key={tag} style={{ padding: "0.4rem 1rem", background: "var(--wheat)", borderRadius: "2rem", fontSize: "0.78rem", color: "var(--forest)", fontWeight: 500 }}>{tag}</span>
                   ))}
                 </div>
@@ -741,27 +763,22 @@ export default function HomePage() {
                   <div className="natura-scenery">
                     <div style={{ marginBottom: "1.5rem", opacity: 0.8 }}>
                       <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" width="180">
-                        {/* Sun */}
                         <circle cx="95" cy="15" r="10" fill="#e8d5a3" opacity="0.9" />
-                        {/* Mountains/hills */}
                         <ellipse cx="30" cy="70" rx="40" ry="25" fill="#2d4a2d" opacity="0.8" />
                         <ellipse cx="80" cy="65" rx="50" ry="22" fill="#3d6b3d" opacity="0.7" />
                         <ellipse cx="60" cy="75" rx="70" ry="18" fill="#2d4a2d" opacity="0.9" />
-                        {/* Church */}
                         <rect x="52" y="42" width="10" height="18" fill="rgba(255,255,255,0.6)" />
                         <polygon points="57,32 48,42 66,42" fill="rgba(255,255,255,0.7)" />
                         <rect x="55" y="28" width="4" height="6" fill="rgba(255,255,255,0.8)" />
-                        {/* Trees */}
                         <polygon points="15,55 20,40 25,55" fill="#2d4a2d" />
                         <polygon points="100,58 106,43 112,58" fill="#2d4a2d" />
-                        {/* Sky gradient */}
                         <ellipse cx="57" cy="20" rx="60" ry="15" fill="#7ca0b8" opacity="0.15" />
                       </svg>
                     </div>
                     <div className="natura-scenery-title">Cristești, Nisporeni</div>
-                    <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.75rem", letterSpacing: "0.1em", marginTop: "0.5rem", textTransform: "uppercase" }}>Moldova · Inima Țării</p>
+                    <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.75rem", letterSpacing: "0.1em", marginTop: "0.5rem", textTransform: "uppercase" }}>Moldova · Podișul Central</p>
                     <div style={{ marginTop: "1.5rem" }}>
-                      {["Altitudine ~200m", "Climă temperat-continentală", "Vegetație de deal"].map(t => (
+                      {["Altitudine ~159 m", "Climă temperat-continentală", "Vegetație de deal"].map(t => (
                           <span key={t} className="natura-tag">{t}</span>
                       ))}
                     </div>
@@ -778,9 +795,9 @@ export default function HomePage() {
         <div className="quote-section" id="comunitate">
           <span className="quote-mark">"</span>
           <p className="quote-text">
-            Oriunde ai merge în lume, Cristeștii rămâne în inima ta — în mirosul fânului proaspăt cosit, în glasul clopotelor de duminică și în zâmbetul cald al vecinilor.
+            Oriunde ai merge în lume, Cristeștii rămâne în inima ta — în mirosul fânului proaspăt cosit, în glasul clopotelor de duminică și în zâmbetul cald al vecinilor de pe aceste dealuri vechi de secole.
           </p>
-          <span className="quote-author">— Glasul satului</span>
+          <span className="quote-author">— Glasul satului, atestat din 1429</span>
         </div>
 
         {/* ── EVENTS ── */}
@@ -831,7 +848,7 @@ export default function HomePage() {
           <div className="footer-inner">
             <div>
               <div className="footer-brand">Cristești</div>
-              <div className="footer-tagline">Raionul Nisporeni · Republica Moldova</div>
+              <div className="footer-tagline">Raionul Nisporeni · Republica Moldova · Atestat 1429</div>
             </div>
             <div className="footer-links">
               <strong style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.5rem", display: "block" }}>Navigare</strong>
@@ -845,7 +862,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="footer-bottom">
-            <span>© {new Date().getFullYear()} Cristești, Raionul Nisporeni</span>
+            <span>© {new Date().getFullYear()} Cristești, Raionul Nisporeni · Comuna Cristești</span>
             <span>Prisăcaru Savelie ❤</span>
           </div>
         </footer>
