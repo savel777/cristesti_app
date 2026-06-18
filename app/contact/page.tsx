@@ -96,11 +96,9 @@ export default function PhoneDirectoryPage() {
 
     const navLinks = [
         { label: "Acasă",      href: "/" },
-        { label: "Istorie",    href: "/#despre" },
-        { label: "Natură",     href: "/#natura" },
-        { label: "Comunitate", href: "/#comunitate" },
-        { label: "Evenimente", href: "/#evenimente" },
-        { label: "Contact",    href: "/#contact" },
+        { label: "Harta", href: "/harta" },
+        { label: "Meteo", href: "/meteo" },
+        { label: "Contacte",    href: "/contact" },
     ];
 
     return (

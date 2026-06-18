@@ -90,9 +90,8 @@ export default function HomePage() {
 
   const navLinks = [
     { label: "Acasă", href: "#" },
-    { label: "Istorie", href: "#despre" },
     { label: "Meteo", href: "/meteo" },
-    { label: "Harta", href: "#comunitate" },
+    { label: "Harta", href: "/harta" },
     { label: "Contacte", href: "/contact" },
   ];
 
@@ -837,7 +836,7 @@ export default function HomePage() {
             <p style={{ color: "var(--muted)", maxWidth: "40ch", margin: "0 auto 2.5rem", lineHeight: 1.8, fontSize: "0.95rem" }}>
               Ai întrebări despre sat, vrei să contribui cu informații sau să te implici în comunitate? Scrie-ne!
             </p>
-            <a href="mailto:contact@cristesti.md" className="btn-primary" style={{ display: "inline-flex" }}>
+            <a href="https://www.facebook.com/share/g/1BBxikg7DN/" className="btn-primary" style={{ display: "inline-flex" }}>
               Scrie-ne un mesaj <IconArrowRight />
             </a>
           </div>
