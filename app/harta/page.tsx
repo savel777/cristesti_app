@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { Locatie } from '@/components/HartaSatelit';
 
 const HartaSatelit = dynamic(() => import('@/components/HartaSatelit'), {
     ssr: false,
