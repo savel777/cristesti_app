@@ -271,7 +271,7 @@ export default function MeteoPage() {
 
     const navLinks = [
         { label: "Acasă",      href: "/" },
-        { label: "Harta", href: "/Harta" },
+        { label: "Harta", href: "/harta" },
         { label: "Contacte",    href: "/contact" },
     ];
 
