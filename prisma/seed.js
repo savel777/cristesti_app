@@ -11,10 +11,8 @@ async function main() {
     const fileData = fs.readFileSync(filePath, 'utf-8');
     const contacte = JSON.parse(fileData);
 
-    // Curățăm tabelul înainte (ca să nu avem duplicate)
     await prisma.ghidTelefon.deleteMany({});
 
-    // Inserăm cele 233 de numere dintr-o singură mișcare
     const rezultat = await prisma.ghidTelefon.createMany({
         data: contacte,
     });

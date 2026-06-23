@@ -5,10 +5,10 @@ const prisma = new PrismaClient();
 
 export async function GET() {
     try {
-        // Preluăm toate cele 233 de contacte din cloud-ul Aiven
+
         const dateAiven = await prisma.ghidTelefon.findMany({
             orderBy: {
-                numePrenume: 'asc', // Le trimitem deja sortate alfabetic
+                numePrenume: 'asc',
             },
         });
 
